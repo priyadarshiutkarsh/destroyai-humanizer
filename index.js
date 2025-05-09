@@ -7,6 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/humanize', async (req, res) => {
   const { essay } = req.body;
@@ -14,7 +15,7 @@ app.post('/humanize', async (req, res) => {
   console.log('📝 Received essay:', essay);
 
   if (!essay) {
-    return res.status(400).json({ error: 'No essay provided' });
+    return res.status(400).send('No essay provided');
   }
 
   try {
@@ -32,7 +33,7 @@ app.post('/humanize', async (req, res) => {
     await page.click('#submit-button');
 
     await page.waitForSelector('#output-text', { timeout: 15000 });
-    await page.waitForTimeout(7000); // wait for text to process
+    await page.waitForTimeout(7000); // wait for processing
 
     const result = await page.$eval('#output-text', el => el.value);
 
@@ -40,10 +41,23 @@ app.post('/humanize', async (req, res) => {
 
     await browser.close();
 
-    res.json({ result });
+    res.send(`
+      <html>
+        <head><title>Humanized Essay</title></head>
+        <body style="font-family:sans-serif; padding: 2rem;">
+          <h2>✅ Your Essay Has Been Humanized</h2>
+          <p><strong>Original Text:</strong></p>
+          <pre>${essay}</pre>
+          <p><strong>Humanized Output:</strong></p>
+          <pre>${result}</pre>
+          <br />
+          <a href="https://form.jotform.com/251283670727057">⬅ Submit Another</a>
+        </body>
+      </html>
+    `);
   } catch (e) {
     console.error('❌ Error during humanization:', e);
-    res.status(500).json({ error: 'Something went wrong during processing.' });
+    res.status(500).send('Something went wrong while processing the essay.');
   }
 });
 
