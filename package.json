@@ -1,0 +1,15 @@
+
+{
+  "name": "destroyai-humanizer",
+  "version": "1.0.0",
+  "description": "AI text humanizer backend using Puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "puppeteer": "^20.8.1"
+  }
+}
