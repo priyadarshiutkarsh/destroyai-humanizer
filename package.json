@@ -2,13 +2,14 @@
   "name": "destroyai-humanizer",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "postinstall": "PUPPETEER_SKIP_DOWNLOAD=true"
+    "postinstall": "puppeteer install"
   },
   "dependencies": {
     "express": "^4.18.2",
     "body-parser": "^1.20.2",
-    "puppeteer-core": "^21.3.8"
+    "puppeteer": "^21.3.8"
   }
 }
