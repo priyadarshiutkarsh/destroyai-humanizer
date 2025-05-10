@@ -11,7 +11,6 @@ app.get('/', (req, res) => {
 
 app.post('/humanize', async (req, res) => {
   const { essay } = req.body;
-  console.log('Received essay:', essay);
 
   if (!essay) {
     return res.status(400).json({ error: 'No essay provided' });
@@ -24,28 +23,32 @@ app.post('/humanize', async (req, res) => {
     });
 
     const page = await browser.newPage();
-    await page.goto('https://notegpt.io/ai-humanizer', { waitUntil: 'networkidle2' });
+    await page.goto('https://ai-text-humanizer.com/', { waitUntil: 'networkidle2' });
 
-    // Paste the essay text
-    await page.waitForSelector('textarea.el-textarea__inner');
-    await page.type('textarea.el-textarea__inner', essay);
+    // Type the essay
+    await page.waitForSelector('#textareaBefore');
+    await page.type('#textareaBefore', essay);
 
-    // Click the Humanize button
-    await page.click('button:has-text("AI Humanizer")');
+    // Click the button with text 'Humanize Text'
+    await page.evaluate(() => {
+      const buttons = [...document.querySelectorAll('button')];
+      const humanizeBtn = buttons.find(btn => btn.innerText.includes('Humanize Text'));
+      if (humanizeBtn) humanizeBtn.click();
+    });
 
-    // Wait for the result to appear
-    await page.waitForSelector('.output-paragraph'); // Adjust this selector if needed
-    await page.waitForTimeout(7000); // Give it time to process
+    // Wait for the output area to populate (adjust if needed)
+    await page.waitForSelector('textarea[readonly]', { timeout: 15000 });
+    await page.waitForTimeout(4000); // Additional buffer time
 
-    // Get result
-    const result = await page.$eval('.output-paragraph', el => el.textContent);
+    // Get the humanized result
+    const result = await page.$eval('textarea[readonly]', el => el.value);
 
     await browser.close();
     res.json({ result });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Something went wrong');
+    console.error('Error:', error.message);
+    res.status(500).json({ error: 'Failed to humanize text' });
   }
 });
 
