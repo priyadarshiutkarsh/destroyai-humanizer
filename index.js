@@ -11,31 +11,37 @@ app.get('/', (req, res) => {
 
 app.post('/humanize', async (req, res) => {
   const { essay } = req.body;
-  console.log('Received essay:', essay);
+  if (!essay) {
+    return res.status(400).send({ error: 'Essay is required' });
+  }
 
   try {
-    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-    await page.goto('https://ai-text-humanizer.com', { waitUntil: 'networkidle2' });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
-    // Type essay into textarea
+    const page = await browser.newPage();
+    await page.goto('https://ai-text-humanizer.com', {
+      waitUntil: 'networkidle2'
+    });
+
     await page.waitForSelector('#textareaBefore');
     await page.type('#textareaBefore', essay);
 
-    // Click humanize button
-    await page.click('button:has-text("Humanize Text")');
+    await page.click('#submit'); // or match the actual Humanize button selector
+    await page.waitForTimeout(10000); // give time for processing
 
-    // Wait for output
-    await page.waitForSelector('#textareaAfter', { timeout: 15000 });
-
-    // Get result
-    const result = await page.$eval('#textareaAfter', el => el.value);
+    const result = await page.evaluate(() => {
+      const output = document.querySelector('#textareaBefore'); // if text is replaced in same box
+      return output ? output.value : '❌ No output found';
+    });
 
     await browser.close();
     res.json({ result });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Something went wrong');
+    res.status(500).send({ error: 'Something went wrong' });
   }
 });
 
