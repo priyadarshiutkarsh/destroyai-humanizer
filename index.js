@@ -9,10 +9,11 @@ app.get('/', (req, res) => {
   res.send('DestroyAI backend is live!');
 });
 
-app.post('/humanize', async (req, res) => {
+app.post('/Humanize', async (req, res) => {
   const { essay } = req.body;
+
   if (!essay) {
-    return res.status(400).send({ error: 'Essay is required' });
+    return res.status(400).json({ error: 'Essay content missing' });
   }
 
   try {
@@ -22,26 +23,21 @@ app.post('/humanize', async (req, res) => {
     });
 
     const page = await browser.newPage();
-    await page.goto('https://ai-text-humanizer.com', {
-      waitUntil: 'networkidle2'
-    });
+    await page.goto('https://ai-text-humanizer.com/', { waitUntil: 'networkidle2' });
 
     await page.waitForSelector('#textareaBefore');
     await page.type('#textareaBefore', essay);
 
-    await page.click('#submit'); // or match the actual Humanize button selector
-    await page.waitForTimeout(10000); // give time for processing
+    await page.click('button'); // Adjust this selector based on the site button
 
-    const result = await page.evaluate(() => {
-      const output = document.querySelector('#textareaBefore'); // if text is replaced in same box
-      return output ? output.value : '❌ No output found';
-    });
+    await page.waitForTimeout(8000);
+    const result = await page.$eval('#textareaAfter', el => el.value);
 
     await browser.close();
     res.json({ result });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: 'Something went wrong' });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Failed to humanize text' });
   }
 });
 
