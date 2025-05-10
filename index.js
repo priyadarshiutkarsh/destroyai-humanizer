@@ -1,6 +1,5 @@
-
 const express = require('express');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -20,9 +19,11 @@ app.post('/humanize', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
+      executablePath: '/usr/bin/google-chrome',
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+
     const page = await browser.newPage();
 
     await page.goto('https://ai-text-humanizer.com', { waitUntil: 'networkidle2' });
