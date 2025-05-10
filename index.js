@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/humanize', async (req, res) => {
-  const { essay } = req.body;
+  const essay = req.body['Enter the Essay You Want to Destroy'] || req.body.essay;
 
   console.log('📝 Received essay:', essay);
 
@@ -28,15 +28,21 @@ app.post('/humanize', async (req, res) => {
 
     await page.goto('https://ai-text-humanizer.com', { waitUntil: 'networkidle2' });
 
-    await page.waitForSelector('#input-text');
-    await page.type('#input-text', essay);
+    // Type the essay into the input textarea
+    await page.waitForSelector('textarea');
+    await page.type('textarea', essay);
 
-    await page.click('#submit-button');
+    // Click the "Humanize Text" button
+    await page.click('button[class*="btn"]');
 
-    await page.waitForSelector('#output-text', { timeout: 15000 });
-    await page.waitForTimeout(7000); // wait for processing
+    // Wait for the humanized output to appear
+    await page.waitForTimeout(7000); // Adjust if necessary
 
-    const result = await page.$eval('#output-text', el => el.value);
+    // Extract the result from the same textarea (site replaces the value)
+    const result = await page.evaluate(() => {
+      const el = document.querySelector('textarea');
+      return el ? el.value : '⚠️ Could not extract result';
+    });
 
     console.log('✅ Humanized result:', result);
 
